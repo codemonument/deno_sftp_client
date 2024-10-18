@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"exports": "./main.ts",
 	"tasks": {
-		"dev": "deno run --watch main.ts",
+		"dev": "deno run --watch example.ts",
 		"dry": "deno publish --dry-run",
 		"test": "deno test --doc",
 		"prepare": "deno task test && deno task dry"
