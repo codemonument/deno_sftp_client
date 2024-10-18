@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"exports": "./main.ts",
 	"tasks": {
+		"dev-comment": "this exe requires read access to deno itself and write access to the current directory",
 		"dev": "deno run --watch -E -R=./,$(which deno) --allow-run=sftp example.ts",
 		"dry": "deno publish --dry-run",
 		"test": "deno test --doc",

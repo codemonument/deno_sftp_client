@@ -1,3 +1,5 @@
+import { execa, Options, ResultPromise } from "execa";
+
 /**
  * The options for instantiating a new SftpClient.
  */
@@ -24,3 +26,31 @@ export type ClientOptions = {
      */
     uploaderName: string;
 };
+
+export class SftpClient {
+    public uploaderName = "SftpClient";
+    private client: ResultPromise;
+
+    constructor({ cwd, host, uploaderName }: ClientOptions) {
+        this.uploaderName = uploaderName;
+
+        this.client = execa({
+            all: true,
+            stdout: ["pipe", "inherit"],
+            stderr: ["pipe", "inherit"],
+            cwd, // specify a working directory
+        })`sftp ${host}`;
+
+        // Detect to the exit of the child process
+        this.client.then((result) => {
+            console.log(
+                `SFTP Connection exited with code ${result.exitCode}`,
+                result,
+            );
+        });
+    }
+
+    public kill() {
+        return this.client.kill();
+    }
+}
