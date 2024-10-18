@@ -339,7 +339,7 @@ export class SftpClient {
         return this.client.kill();
     }
 
-    public async exit() {
+    public async close() {
         await this.sendCommand("exit");
 
         try {
