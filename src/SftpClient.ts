@@ -268,11 +268,11 @@ export class SftpClient {
     }
 
     public async exit() {
-        this.sendCommand("exit");
+        await this.sendCommand("exit");
 
         try {
-            // Allows awaiting the exit of the sftp client from the outside
-            await this.client;
+            // Allows awaiting the exit of the sftp client from the outside + getting the result
+            return this.client;
         } catch (error) {
             this.logger.error(
                 `${this.uploaderName}: Error while exiting sftp client`,
