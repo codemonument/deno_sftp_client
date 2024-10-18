@@ -7,6 +7,7 @@ import {
 import { execa, ResultPromise } from "execa";
 import { Readable } from "node:stream";
 import type { GenericLogger } from "./GenericLogger.type.ts";
+import pDefer, { DeferredPromise } from 'p-defer';
 
 /**
  * The options for instantiating a new SftpClient.
@@ -37,12 +38,55 @@ export type ClientOptions = {
     logger?: GenericLogger;
 };
 
+/**
+ * This type is used to detect the completion of an up or download
+ */
+export type FileTransferInProgress = {
+    /**
+     * The type of the transfer. Either "upload" or "download".
+     */
+    transferType: "upload" | "download";
+
+    /**
+     * The local path of the file that is being transfered.
+     */
+    localPath: string;
+
+    /**
+     * The remote path of the file that is being transfered.
+     */
+    remotePath: string; 
+
+    /**
+     * The sftp command which was used to start the file transfer. 
+     */
+    command: string;
+
+    /**
+     * A deferred promise which is used to resolve one file transfer. 
+     * Flow: 
+     * 1. The file transfer is started => Deferred promise is created
+     * 2. The promise part of this DeferredPromise object is awaited by some part of the program 
+     * 3. The file transfer is completed 
+     *    => The promise is resolved 
+     *    => The part waiting for the completion of the promise is notified of the completion of the transfer
+     */
+    pending: DeferredPromise<boolean>;
+  };
+
 export class SftpClient {
     public uploaderName = "SftpClient";
 
     private logger: GenericLogger;
     private client: ResultPromise;
     private clientOut: ReadableStream<string>;
+
+    /**
+     * Includes all file paths for which a file transfer is in progress
+     * 
+     * TODO: rename later to transferInProgress
+     */
+    private uploadInProgress = new Map<string, FileTransferInProgress>();
 
     constructor({ cwd, host, uploaderName, logger }: ClientOptions) {
         this.uploaderName = uploaderName;
@@ -91,6 +135,14 @@ export class SftpClient {
                         );
                         break;
                     }
+                              case 'Uploading': {
+            // detected this line: Uploading dist/apps/maya/apps_maya_src_app_maya-features_d2e7634ddfe25cc2cc93204cdf6ffb67_routes_ts.6956cb7b27a3cc6d.js to /home/tt-bj2/www/maya.internett.de/apps_maya_src_app_maya-features_d2e7634ddfe25cc2cc93204cdf6ffb67_routes_ts.6956cb7b27a3cc6d.js
+            const localPath = parts[1];
+            const upload = this.uploadInProgress.get(localPath);
+            if (!upload) {
+              console.error(`Upload in progress for ${localPath} not found!`);
+              return;
+            }
                     default: {
                         // some other unrecognized stdout/stderr line
                         this.logger.log("SFTP out: ", line);
