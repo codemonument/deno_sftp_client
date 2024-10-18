@@ -1,5 +1,4 @@
 import { SftpClient } from "./main.ts";
-import { setTimeout } from "node:timers/promises";
 
 const sftpClient = new SftpClient({
     cwd: "playground",
