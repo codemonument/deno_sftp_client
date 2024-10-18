@@ -7,7 +7,8 @@ import {
 import { execa, ResultPromise } from "execa";
 import { Readable } from "node:stream";
 import type { GenericLogger } from "./GenericLogger.type.ts";
-import pDefer, { DeferredPromise } from 'p-defer';
+import pDefer, { DeferredPromise } from "p-defer";
+import { setTimeout } from "node:timers/promises";
 
 /**
  * The options for instantiating a new SftpClient.
@@ -55,24 +56,24 @@ export type FileTransferInProgress = {
     /**
      * The remote path of the file that is being transfered.
      */
-    remotePath: string; 
+    remotePath: string;
 
     /**
-     * The sftp command which was used to start the file transfer. 
+     * The sftp command which was used to start the file transfer.
      */
     command: string;
 
     /**
-     * A deferred promise which is used to resolve one file transfer. 
-     * Flow: 
+     * A deferred promise which is used to resolve one file transfer.
+     * Flow:
      * 1. The file transfer is started => Deferred promise is created
-     * 2. The promise part of this DeferredPromise object is awaited by some part of the program 
-     * 3. The file transfer is completed 
-     *    => The promise is resolved 
+     * 2. The promise part of this DeferredPromise object is awaited by some part of the program
+     * 3. The file transfer is completed
+     *    => The promise is resolved
      *    => The part waiting for the completion of the promise is notified of the completion of the transfer
      */
     pending: DeferredPromise<boolean>;
-  };
+};
 
 export class SftpClient {
     public uploaderName = "SftpClient";
@@ -82,11 +83,13 @@ export class SftpClient {
     private clientOut: ReadableStream<string>;
 
     /**
-     * Includes all file paths for which a file transfer is in progress
-     * 
-     * TODO: rename later to transferInProgress
+     * Includes all file paths for which an upload is in progress
+     * key: local file path
+     * value: FileTransferInProgress object
      */
     private uploadInProgress = new Map<string, FileTransferInProgress>();
+
+    // TODO: Implement downloadInProgress later
 
     constructor({ cwd, host, uploaderName, logger }: ClientOptions) {
         this.uploaderName = uploaderName;
@@ -94,8 +97,8 @@ export class SftpClient {
 
         this.client = execa({
             all: true,
-            stdout: ["pipe", "inherit"],
-            stderr: ["pipe", "inherit"],
+            stdout: ["pipe"],
+            stderr: ["pipe"],
             cwd, // specify a working directory
         })`sftp ${host}`;
 
@@ -135,14 +138,51 @@ export class SftpClient {
                         );
                         break;
                     }
-                              case 'Uploading': {
-            // detected this line: Uploading dist/apps/maya/apps_maya_src_app_maya-features_d2e7634ddfe25cc2cc93204cdf6ffb67_routes_ts.6956cb7b27a3cc6d.js to /home/tt-bj2/www/maya.internett.de/apps_maya_src_app_maya-features_d2e7634ddfe25cc2cc93204cdf6ffb67_routes_ts.6956cb7b27a3cc6d.js
-            const localPath = parts[1];
-            const upload = this.uploadInProgress.get(localPath);
-            if (!upload) {
-              console.error(`Upload in progress for ${localPath} not found!`);
-              return;
-            }
+                    case "Uploading": {
+                        // detects this line:
+                        // Uploading some/local/path/file.ext to some/remote/path/file.ext
+                        const [_uploading, localPath, _to, remotePath] = parts;
+                        const upload = this.uploadInProgress.get(localPath);
+                        if (!upload) {
+                            this.logger.error(
+                                `${uploaderName}: STATE_MISSMATCH: internal sftp cli announced an upload", but the FileTransferInProgress state was not found!`,
+                                { localPath, remotePath },
+                            );
+                            return;
+                        }
+                        this.logger.info(
+                            `${uploaderName}: Uploaded ${localPath} to ${remotePath}`,
+                        );
+                        upload.pending.resolve(true);
+                        break;
+                    }
+                    case "sftp>": {
+                        // prompt line
+                        const [_prompt, action, ...rest] = parts;
+                        const sftpCommand = `${action} ${rest.join(" ")}`;
+                        switch (action) {
+                            case "put":
+                                // this is the upload prompt
+                                this.logger.log(
+                                    `${uploaderName}: `,
+                                    sftpCommand,
+                                );
+                                break;
+                            case "cd":
+                                // this is initial cd prompt + evtl. other cd prompts
+                                this.logger.log(
+                                    `${uploaderName}: `,
+                                    sftpCommand,
+                                );
+                                break;
+                            default:
+                                this.logger.log(
+                                    `${uploaderName}:`,
+                                    sftpCommand,
+                                );
+                        }
+                        break;
+                    }
                     default: {
                         // some other unrecognized stdout/stderr line
                         this.logger.log("SFTP out: ", line);
