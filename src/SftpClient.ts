@@ -6,9 +6,8 @@ import {
 } from "@codemonument/rx-webstreams";
 import { execa, ResultPromise } from "execa";
 import { Readable } from "node:stream";
+import { DeferredPromise } from "p-defer";
 import type { GenericLogger } from "./GenericLogger.type.ts";
-import pDefer, { DeferredPromise } from "p-defer";
-import { setTimeout } from "node:timers/promises";
 
 /**
  * The options for instantiating a new SftpClient.
