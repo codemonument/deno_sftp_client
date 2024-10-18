@@ -1,10 +1,8 @@
 import {
     bytesToString,
-    emittableSource,
     filter,
     simpleCallbackTarget,
     stringToLines,
-    stringToUtf8Bytes,
 } from "@codemonument/rx-webstreams";
 import { execa, type ResultPromise } from "execa";
 import { Readable, Writable } from "node:stream";
@@ -116,7 +114,8 @@ export class SftpClient {
     private logger: GenericLogger;
     private client: ResultPromise;
     private clientOut: ReadableStream<string>;
-    private clientIn = emittableSource<string>();
+    private clientIn: WritableStreamDefaultWriter<Uint8Array>;
+    private textEncoder = new TextEncoder();
 
     /**
      * Includes all file paths for which an upload is in progress
@@ -140,10 +139,20 @@ export class SftpClient {
 
         // Detect to the exit of the child process
         this.client.then((result) => {
-            console.log(
-                `SFTP Connection exited with code ${result.exitCode}`,
-                result,
-            );
+            switch (result.exitCode) {
+                case 0: {
+                    this.logger.info(
+                        `${uploaderName}: SFTP Connection exited successfully`,
+                    );
+                    break;
+                }
+                default: {
+                    this.logger.error(
+                        `${uploaderName}: SFTP Connection exited unsuccessful with code ${result.exitCode}`,
+                        result,
+                    );
+                }
+            }
         });
 
         // Setup this.clientIn
@@ -153,11 +162,11 @@ export class SftpClient {
                 "SftpClient.client.stdin stream not available - DEV ERROR!",
             );
         }
-        const clientInUint8 = Writable.toWeb(
+
+        const clientInRaw = Writable.toWeb(
             this.client.stdin,
         ) as WritableStream<Uint8Array>;
-
-        this.clientIn.pipeThrough(stringToUtf8Bytes()).pipeTo(clientInUint8);
+        this.clientIn = clientInRaw.getWriter();
 
         // Setup this.clientOut
         // --------------------
@@ -241,8 +250,35 @@ export class SftpClient {
         );
     }
 
+    /**
+     * @param sftpCommand The sftp command to send to the sftp cli
+     * see here for sftp cli docs: https://www.cs.fsu.edu/~myers/howto/commandLineSSH.html
+     */
+    public async sendCommand(sftpCommand: string) {
+        const encodedCommand = this.textEncoder.encode(sftpCommand + ` \n`);
+        await this.clientIn.write(encodedCommand);
+    }
+
+    /**
+     * Hard kill of the inner sftp client process
+     * @returns
+     */
     public kill() {
         return this.client.kill();
+    }
+
+    public async exit() {
+        this.sendCommand("exit");
+
+        try {
+            // Allows awaiting the exit of the sftp client from the outside
+            await this.client;
+        } catch (error) {
+            this.logger.error(
+                `${this.uploaderName}: Error while exiting sftp client`,
+                error,
+            );
+        }
     }
 
     /**
@@ -289,13 +325,5 @@ export class SftpClient {
         } else {
             this.sendCommand("ls");
         }
-    }
-
-    /**
-     * @param sftpCommand The sftp command to send to the sftp cli
-     * see here for sftp cli docs: https://www.cs.fsu.edu/~myers/howto/commandLineSSH.html
-     */
-    public sendCommand(sftpCommand: string) {
-        this.clientIn.emit(sftpCommand + ` \n`);
     }
 }
