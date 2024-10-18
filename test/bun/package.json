@@ -8,8 +8,10 @@
 	"peerDependencies": {
 		"typescript": "^5.0.0"
 	},
-	"scripts": {},
 	"dependencies": {
 		"@codemonument/sftp-client": "npm:@jsr/codemonument__sftp-client"
+	},
+	"scripts": {
+		"dev": "bun run --watch ./index.ts"
 	}
 }
