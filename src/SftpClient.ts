@@ -239,13 +239,17 @@ export class SftpClient {
         if (remotePath) {
             command += ` ${remotePath}`;
         }
-        const pending = pDefer<boolean>();
 
         const uploadInProgress = {
+            transferType: "upload",
             localPath,
             remotePath: remotePath ?? undefined,
-            pending,
+            pending: pDefer<boolean>(),
             command,
         } satisfies FileTransferInProgress;
+
+        this.uploadInProgress.set(localPath, uploadInProgress);
+
+        return uploadInProgress;
     }
 }
