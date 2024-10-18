@@ -1,11 +1,13 @@
 import {
     bytesToString,
+    emittableSource,
     filter,
     simpleCallbackTarget,
     stringToLines,
+    stringToUtf8Bytes,
 } from "@codemonument/rx-webstreams";
 import { execa, type ResultPromise } from "execa";
-import { Readable } from "node:stream";
+import { Readable, Writable } from "node:stream";
 import pDefer, { type DeferredPromise } from "p-defer";
 import type { GenericLogger } from "./GenericLogger.type.ts";
 
@@ -114,6 +116,7 @@ export class SftpClient {
     private logger: GenericLogger;
     private client: ResultPromise;
     private clientOut: ReadableStream<string>;
+    private clientIn = emittableSource<string>();
 
     /**
      * Includes all file paths for which an upload is in progress
@@ -143,6 +146,21 @@ export class SftpClient {
             );
         });
 
+        // Setup this.clientIn
+        // --------------------
+        if (!this.client.stdin) {
+            throw new Error(
+                "SftpClient.client.stdin stream not available - DEV ERROR!",
+            );
+        }
+        const clientInUint8 = Writable.toWeb(
+            this.client.stdin,
+        ) as WritableStream<Uint8Array>;
+
+        this.clientIn.pipeThrough(stringToUtf8Bytes()).pipeTo(clientInUint8);
+
+        // Setup this.clientOut
+        // --------------------
         if (!this.client.all) {
             throw new Error(
                 "SftpClient.client.all stream not available - DEV ERROR!",
@@ -251,5 +269,26 @@ export class SftpClient {
         this.uploadInProgress.set(localPath, uploadInProgress);
 
         return uploadInProgress;
+    }
+
+    public uploadFile(localPath: string, remotePath?: string) {
+        const uploadInProgress = this.prepareFileUploadCommand(
+            localPath,
+            remotePath,
+        );
+
+        this.sendCommand(uploadInProgress.command);
+
+        return uploadInProgress.pending.promise;
+    }
+
+    //
+
+    /**
+     * @param sftpCommand The sftp command to send to the sftp cli
+     * see here for sftp cli docs: https://www.cs.fsu.edu/~myers/howto/commandLineSSH.html
+     */
+    public sendCommand(sftpCommand: string) {
+        this.clientIn.emit(sftpCommand + ` \n`);
     }
 }
