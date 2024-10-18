@@ -260,25 +260,41 @@ export class SftpClient {
     }
 
     /**
-     * Hard kill of the inner sftp client process
-     * @returns
+     * TODO: caputre output of the ls command and return as Promise<string[]>
+     * @param remotePath optional - if not provided, the current remote directory will be listed
      */
-    public kill() {
-        return this.client.kill();
+    public async ls(remotePath?: string) {
+        if (remotePath) {
+            await this.sendCommand(`ls ${remotePath}`);
+        } else {
+            await this.sendCommand("ls");
+        }
     }
 
-    public async exit() {
-        await this.sendCommand("exit");
-
-        try {
-            // Allows awaiting the exit of the sftp client from the outside + getting the result
-            return this.client;
-        } catch (error) {
-            this.logger.error(
-                `${this.uploaderName}: Error while exiting sftp client`,
-                error,
-            );
+    /**
+     * TODO: capture output of the lls command and return as Promise<string[]>
+     * @param localPath optional - the local path of the file to download
+     */
+    public async lls(localPath?: string) {
+        if (localPath) {
+            await this.sendCommand(`lls ${localPath}`);
+        } else {
+            await this.sendCommand("lls");
         }
+    }
+
+    /**
+     * @param remotePath required - the remote path to cd into
+     */
+    public async cd(remotePath: string) {
+        await this.sendCommand(`cd ${remotePath}`);
+    }
+
+    /**
+     * @param localPath required - the local path to locally cd into
+     */
+    public async lcd(localPath: string) {
+        await this.sendCommand(`lcd ${localPath}`);
     }
 
     /**
@@ -316,14 +332,24 @@ export class SftpClient {
     }
 
     /**
-     * TODO: caputre output of the ls command and return as Promise<string[]>
-     * @param remotePath optional - if not provided, the current remote directory will be listed
+     * Hard kill of the inner sftp client process
+     * @returns
      */
-    public async ls(remotePath?: string) {
-        if (remotePath) {
-            await this.sendCommand(`ls ${remotePath}`);
-        } else {
-            await this.sendCommand("ls");
+    public kill() {
+        return this.client.kill();
+    }
+
+    public async exit() {
+        await this.sendCommand("exit");
+
+        try {
+            // Allows awaiting the exit of the sftp client from the outside + getting the result
+            return this.client;
+        } catch (error) {
+            this.logger.error(
+                `${this.uploaderName}: Error while exiting sftp client`,
+                error,
+            );
         }
     }
 }
