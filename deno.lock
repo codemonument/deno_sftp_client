@@ -14,6 +14,7 @@
     "npm:@types/node@*": "22.7.6",
     "npm:@types/node@^22.7.6": "22.7.6",
     "npm:execa@^9.4.1": "9.4.1",
+    "npm:p-defer@^4.0.1": "4.0.1",
     "npm:zod@3.22.4": "3.22.4"
   },
   "jsr": {
@@ -142,6 +143,9 @@
         "unicorn-magic"
       ]
     },
+    "p-defer@4.0.1": {
+      "integrity": "sha512-Mr5KC5efvAK5VUptYEIopP1bakB85k2IWXaRC0rsh1uwn1L6M0LVml8OIQ4Gudg4oyZakf7FmeRLkMMtZW1i5A=="
+    },
     "parse-ms@4.0.0": {
       "integrity": "sha512-TXfryirbmq34y8QBwgqCVLi+8oA3oWx2eAnSn62ITyEhEYaWRlVZ2DvMM9eZbMs/RfxPu/PK/aBLyGj4IrqMHw=="
     },
@@ -196,7 +200,8 @@
       "jsr:@codemonument/rx-webstreams@~0.9.4",
       "jsr:@std/assert@1",
       "npm:@types/node@^22.7.6",
-      "npm:execa@^9.4.1"
+      "npm:execa@^9.4.1",
+      "npm:p-defer@^4.0.1"
     ]
   }
 }
