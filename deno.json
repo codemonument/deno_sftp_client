@@ -1,8 +1,14 @@
 {
-  "tasks": {
-    "dev": "deno run --watch main.ts"
-  },
-  "imports": {
-    "@std/assert": "jsr:@std/assert@1"
-  }
+	"name": "@codemonument/sftp-client",
+	"version": "0.1.0",
+	"exports": "./main.ts",
+	"tasks": {
+		"dev": "deno run --watch main.ts",
+		"dry": "deno publish --dry-run",
+		"test": "deno test --doc",
+		"prepare": "deno task test && deno task dry"
+	},
+	"imports": {
+		"@std/assert": "jsr:@std/assert@1"
+	}
 }
