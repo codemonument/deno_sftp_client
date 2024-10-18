@@ -304,13 +304,13 @@ export class SftpClient {
         return uploadInProgress;
     }
 
-    public uploadFile(localPath: string, remotePath?: string) {
+    public async uploadFile(localPath: string, remotePath?: string) {
         const uploadInProgress = this.prepareFileUploadCommand(
             localPath,
             remotePath,
         );
 
-        this.sendCommand(uploadInProgress.command);
+        await this.sendCommand(uploadInProgress.command);
 
         return uploadInProgress.pending.promise;
     }
@@ -319,11 +319,11 @@ export class SftpClient {
      * TODO: caputre output of the ls command and return as Promise<string[]>
      * @param remotePath optional - if not provided, the current remote directory will be listed
      */
-    public ls(remotePath?: string) {
+    public async ls(remotePath?: string) {
         if (remotePath) {
-            this.sendCommand(`ls ${remotePath}`);
+            await this.sendCommand(`ls ${remotePath}`);
         } else {
-            this.sendCommand("ls");
+            await this.sendCommand("ls");
         }
     }
 }

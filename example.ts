@@ -7,6 +7,6 @@ const sftpClient = new SftpClient({
     uploaderName: "sftp_1",
 });
 
-sftpClient.ls();
+await sftpClient.ls();
 
 await sftpClient.exit();
