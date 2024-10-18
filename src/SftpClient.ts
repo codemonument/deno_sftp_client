@@ -9,6 +9,7 @@ import { Readable, Writable } from "node:stream";
 import pDefer, { type DeferredPromise } from "p-defer";
 import pMap from "p-map";
 import type { GenericLogger } from "./GenericLogger.type.ts";
+import { concatMap, from, Observable } from "rxjs";
 
 /**
  * The options for instantiating a new SftpClient.
@@ -339,7 +340,7 @@ export class SftpClient {
     /**
      * Uploads multiple files to the remote server (serially).
      * @param files The local files to upload
-     * @returns resolves when all uploads are completed
+     * @returns A Promise which resolves when all uploads are completed
      */
     public async uploadFiles(files: Iterable<string>) {
         const result = await pMap(
@@ -348,6 +349,26 @@ export class SftpClient {
             { concurrency: 1 },
         );
         return result;
+    }
+
+    /**
+     * Uploads multiple files to the remote server (serially).
+     * @param files
+     * @returns An rxjs observable instead of a promise like in this.uploadFiles
+     */
+    public uploadFiles$(
+        files: Iterable<string>,
+    ): Observable<{ file: string; nr: number }> {
+        return from(files).pipe(
+            concatMap((file, index) => {
+                const uploadPromise = this.uploadFile(file).then(() => ({
+                    file,
+                    nr: index + 1,
+                }));
+                //convert the promise from uploadFile to an observable (will be flattened by concatMap)
+                return from(uploadPromise);
+            }),
+        );
     }
 
     /**
