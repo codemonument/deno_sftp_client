@@ -3,7 +3,7 @@
 	"version": "0.1.0",
 	"exports": "./main.ts",
 	"tasks": {
-		"dev": "deno run --watch example.ts",
+		"dev": "deno run --watch -E -R=./,$(which deno) --allow-run=sftp example.ts",
 		"dry": "deno publish --dry-run",
 		"test": "deno test --doc",
 		"prepare": "deno task test && deno task dry"
