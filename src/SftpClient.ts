@@ -279,6 +279,10 @@ export class SftpClient {
         return uploadInProgress.pending.promise;
     }
 
+    /**
+     * TODO: caputre output of the ls command and return as Promise<string[]>
+     * @param remotePath optional - if not provided, the current remote directory will be listed
+     */
     public ls(remotePath?: string) {
         if (remotePath) {
             this.sendCommand(`ls ${remotePath}`);
