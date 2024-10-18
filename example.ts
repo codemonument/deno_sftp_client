@@ -5,3 +5,5 @@ const sftpClient = new SftpClient({
     host: "maya-dev",
     uploaderName: "sftp_1",
 });
+
+sftpClient.ls();

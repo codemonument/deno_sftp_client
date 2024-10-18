@@ -215,28 +215,25 @@ export class SftpClient {
                             case "put":
                                 // this is the upload prompt
                                 this.logger.log(
-                                    `${uploaderName}: `,
-                                    sftpCommand,
+                                    `${uploaderName}: ${sftpCommand}`,
                                 );
                                 break;
                             case "cd":
                                 // this is initial cd prompt + evtl. other cd prompts
                                 this.logger.log(
-                                    `${uploaderName}: `,
-                                    sftpCommand,
+                                    `${uploaderName}: ${sftpCommand}`,
                                 );
                                 break;
                             default:
                                 this.logger.log(
-                                    `${uploaderName}:`,
-                                    sftpCommand,
+                                    `${uploaderName}: ${sftpCommand}`,
                                 );
                         }
                         break;
                     }
                     default: {
                         // some other unrecognized stdout/stderr line
-                        this.logger.log("SFTP out: ", line);
+                        this.logger.log(`${uploaderName}: -> ${line}`);
                         break;
                     }
                 }
@@ -282,7 +279,13 @@ export class SftpClient {
         return uploadInProgress.pending.promise;
     }
 
-    //
+    public ls(remotePath?: string) {
+        if (remotePath) {
+            this.sendCommand(`ls ${remotePath}`);
+        } else {
+            this.sendCommand("ls");
+        }
+    }
 
     /**
      * @param sftpCommand The sftp command to send to the sftp cli
