@@ -1,4 +1,11 @@
-import { execa, Options, ResultPromise } from "execa";
+import { execa, ResultPromise } from "execa";
+import { Readable } from "node:stream";
+import {
+    bytesToString,
+    filter,
+    simpleCallbackTarget,
+    stringToLines,
+} from "@codemonument/rx-webstreams";
 
 /**
  * The options for instantiating a new SftpClient.
@@ -30,6 +37,7 @@ export type ClientOptions = {
 export class SftpClient {
     public uploaderName = "SftpClient";
     private client: ResultPromise;
+    private clientOut: ReadableStream<string>;
 
     constructor({ cwd, host, uploaderName }: ClientOptions) {
         this.uploaderName = uploaderName;
@@ -48,6 +56,26 @@ export class SftpClient {
                 result,
             );
         });
+
+        if (!this.client.all) {
+            throw new Error(
+                "SftpClient.client.all stream not available - DEV ERROR!",
+            );
+        }
+
+        const clientOutUint8 = Readable.toWeb(
+            this.client.all,
+        ) as ReadableStream<
+            Uint8Array
+        >;
+        this.clientOut = clientOutUint8
+            .pipeThrough(bytesToString())
+            .pipeThrough(stringToLines())
+            .pipeThrough(filter((line: string) => line.trim() !== ""));
+
+        this.clientOut.pipeTo(
+            simpleCallbackTarget((chunk) => console.log("Captured:", chunk)),
+        );
     }
 
     public kill() {
