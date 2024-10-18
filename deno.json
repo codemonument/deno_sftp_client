@@ -16,6 +16,7 @@
     "@types/node": "npm:@types/node@^22.7.6",
     "execa": "npm:execa@^9.4.1",
     "p-defer": "npm:p-defer@^4.0.1",
-    "p-map": "npm:p-map@^7.0.2"
+    "p-map": "npm:p-map@^7.0.2",
+    "rxjs": "npm:rxjs@^7.8.1"
   }
 }
