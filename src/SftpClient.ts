@@ -1,11 +1,12 @@
-import { execa, ResultPromise } from "execa";
-import { Readable } from "node:stream";
 import {
     bytesToString,
     filter,
     simpleCallbackTarget,
     stringToLines,
 } from "@codemonument/rx-webstreams";
+import { execa, ResultPromise } from "execa";
+import { Readable } from "node:stream";
+import type { GenericLogger } from "./GenericLogger.type.ts";
 
 /**
  * The options for instantiating a new SftpClient.
@@ -32,15 +33,20 @@ export type ClientOptions = {
      * @example "SFTP1"
      */
     uploaderName: string;
+
+    logger?: GenericLogger;
 };
 
 export class SftpClient {
     public uploaderName = "SftpClient";
+
+    private logger: GenericLogger;
     private client: ResultPromise;
     private clientOut: ReadableStream<string>;
 
-    constructor({ cwd, host, uploaderName }: ClientOptions) {
+    constructor({ cwd, host, uploaderName, logger }: ClientOptions) {
         this.uploaderName = uploaderName;
+        this.logger = logger ?? console;
 
         this.client = execa({
             all: true,
@@ -74,7 +80,24 @@ export class SftpClient {
             .pipeThrough(filter((line: string) => line.trim() !== ""));
 
         this.clientOut.pipeTo(
-            simpleCallbackTarget((chunk) => console.log("Captured:", chunk)),
+            simpleCallbackTarget((line) => {
+                // split line at spaces
+                const parts = line.split(" ");
+
+                switch (parts[0]) {
+                    case "Connected": {
+                        this.logger.info(
+                            `${uploaderName}: connected to ${host}`,
+                        );
+                        break;
+                    }
+                    default: {
+                        // some other unrecognized stdout/stderr line
+                        this.logger.log("SFTP out: ", line);
+                        break;
+                    }
+                }
+            }),
         );
     }
 
