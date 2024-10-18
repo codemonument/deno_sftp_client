@@ -9,4 +9,4 @@ const sftpClient = new SftpClient({
 
 await sftpClient.ls();
 
-await sftpClient.exit();
+await sftpClient.close();

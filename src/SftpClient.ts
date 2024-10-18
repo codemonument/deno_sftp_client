@@ -320,15 +320,32 @@ export class SftpClient {
         return uploadInProgress;
     }
 
+    /**
+     * Uploads a file to the remote server.
+     * @param localPath The local file to upload
+     * @param remotePath optional - the remote path to upload the file to, if undefined: use the remote cwd
+     * @returns resolves when the upload is completed
+     */
     public async uploadFile(localPath: string, remotePath?: string) {
         const uploadInProgress = this.prepareFileUploadCommand(
             localPath,
             remotePath,
         );
-
         await this.sendCommand(uploadInProgress.command);
-
         return uploadInProgress.pending.promise;
+    }
+
+    /**
+     * TODO: add downloadInProgress handling
+     * @param remotePath
+     * @param localPath
+     */
+    public async downloadFile(remotePath: string, localPath?: string) {
+        let command = `get ${remotePath}`;
+        if (localPath) {
+            command += ` ${localPath}`;
+        }
+        await this.sendCommand(command);
     }
 
     /**
