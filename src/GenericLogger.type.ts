@@ -1,3 +1,7 @@
+/**
+ * This generic logger type is used to log messages in the SftpClient class.
+ * It defaults to 'console' if no logger is provided, but can be overwritten at class instantiation.
+ */
 export type GenericLogger = {
     /**
      * Logs a message.

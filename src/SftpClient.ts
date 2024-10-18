@@ -110,6 +110,10 @@ export type FileTransferInProgress =
         pending: DeferredPromise<boolean>;
     };
 
+/**
+ * The SftpClient class provides a simple adapter to the SFTP client cli.
+ * For instantiation - options: see {@link ClientOptions}
+ */
 export class SftpClient {
     public uploaderName = "SftpClient";
 

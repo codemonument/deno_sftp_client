@@ -1,6 +1,3 @@
-export { type GenericLogger } from "./src/GenericLogger.type.ts";
-export { SftpClient } from "./src/SftpClient.ts";
-
 /**
  * This module provides a simple adapter to the SFTP client cli.
  * It's not a complete wrapper right now, but it provides the basic functionality to interact with the SFTP client.
@@ -26,3 +23,7 @@ export { SftpClient } from "./src/SftpClient.ts";
  *
  * @module
  */
+
+export { type GenericLogger } from "./src/GenericLogger.type.ts";
+
+export { SftpClient } from "./src/SftpClient.ts";
