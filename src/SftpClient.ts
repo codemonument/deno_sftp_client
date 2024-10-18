@@ -4,9 +4,9 @@ import {
     simpleCallbackTarget,
     stringToLines,
 } from "@codemonument/rx-webstreams";
-import { execa, ResultPromise } from "execa";
+import { execa, type ResultPromise } from "execa";
 import { Readable } from "node:stream";
-import { DeferredPromise } from "p-defer";
+import pDefer, { type DeferredPromise } from "p-defer";
 import type { GenericLogger } from "./GenericLogger.type.ts";
 
 /**
@@ -41,38 +41,72 @@ export type ClientOptions = {
 /**
  * This type is used to detect the completion of an up or download
  */
-export type FileTransferInProgress = {
-    /**
-     * The type of the transfer. Either "upload" or "download".
-     */
-    transferType: "upload" | "download";
+export type FileTransferInProgress =
+    | {
+        /**
+         * The type of the transfer. Either "upload" or "download".
+         */
+        transferType: "upload";
 
-    /**
-     * The local path of the file that is being transfered.
-     */
-    localPath: string;
+        /**
+         * The local path of the file that is being transfered.
+         */
+        localPath: string;
 
-    /**
-     * The remote path of the file that is being transfered.
-     */
-    remotePath: string;
+        /**
+         * The remote path of the file that is being transfered.
+         * Optional, because the remote path can be omitted in the sftp put command.
+         * In this case, the file will be uploaded to the current remote directory.
+         */
+        remotePath?: string;
 
-    /**
-     * The sftp command which was used to start the file transfer.
-     */
-    command: string;
+        /**
+         * The sftp command which was used to start the file transfer.
+         */
+        command: string;
 
-    /**
-     * A deferred promise which is used to resolve one file transfer.
-     * Flow:
-     * 1. The file transfer is started => Deferred promise is created
-     * 2. The promise part of this DeferredPromise object is awaited by some part of the program
-     * 3. The file transfer is completed
-     *    => The promise is resolved
-     *    => The part waiting for the completion of the promise is notified of the completion of the transfer
-     */
-    pending: DeferredPromise<boolean>;
-};
+        /**
+         * A deferred promise which is used to resolve one file transfer.
+         * Flow:
+         * 1. The file transfer is started => Deferred promise is created
+         * 2. The promise part of this DeferredPromise object is awaited by some part of the program
+         * 3. The file transfer is completed
+         *    => The promise is resolved
+         *    => The part waiting for the completion of the promise is notified of the completion of the transfer
+         */
+        pending: DeferredPromise<boolean>;
+    }
+    | {
+        transferType: "download";
+
+        /**
+         * The local path of the file that is being transfered.
+         * Optional, because the local path can be omitted in the sftp `get` command.
+         * In this case, the file will be downloaded to the current local directory.
+         */
+        localPath?: string;
+
+        /**
+         * The remote path of the file that is being transfered.
+         */
+        remotePath: string;
+
+        /**
+         * The sftp command which was used to start the file transfer.
+         */
+        command: string;
+
+        /**
+         * A deferred promise which is used to resolve one file transfer.
+         * Flow:
+         * 1. The file transfer is started => Deferred promise is created
+         * 2. The promise part of this DeferredPromise object is awaited by some part of the program
+         * 3. The file transfer is completed
+         *    => The promise is resolved
+         *    => The part waiting for the completion of the promise is notified of the completion of the transfer
+         */
+        pending: DeferredPromise<boolean>;
+    };
 
 export class SftpClient {
     public uploaderName = "SftpClient";
@@ -194,5 +228,24 @@ export class SftpClient {
 
     public kill() {
         return this.client.kill();
+    }
+
+    /**
+     * @param localPath required - the local path of the file to upload
+     * @param remotePath optional - if not provided, the file will be uploaded to the current remote directory
+     */
+    private prepareFileUploadCommand(localPath: string, remotePath?: string) {
+        let command = `put ${localPath}`;
+        if (remotePath) {
+            command += ` ${remotePath}`;
+        }
+        const pending = pDefer<boolean>();
+
+        const uploadInProgress = {
+            localPath,
+            remotePath: remotePath ?? undefined,
+            pending,
+            command,
+        } satisfies FileTransferInProgress;
     }
 }
