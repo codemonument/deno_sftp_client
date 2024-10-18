@@ -4,7 +4,7 @@ import {
     simpleCallbackTarget,
     stringToLines,
 } from "@codemonument/rx-webstreams";
-import { execa, type ResultPromise } from "execa";
+import { execa, type Options, type Result, type ResultPromise } from "execa";
 import { Readable, Writable } from "node:stream";
 import pDefer, { type DeferredPromise } from "p-defer";
 import pMap from "p-map";
@@ -328,7 +328,10 @@ export class SftpClient {
      * @param remotePath optional - the remote path to upload the file to, if undefined: use the remote cwd
      * @returns resolves when the upload is completed
      */
-    public async uploadFile(localPath: string, remotePath?: string) {
+    public async uploadFile(
+        localPath: string,
+        remotePath?: string,
+    ): Promise<boolean> {
         const uploadInProgress = this.prepareFileUploadCommand(
             localPath,
             remotePath,
@@ -342,7 +345,7 @@ export class SftpClient {
      * @param files The local files to upload
      * @returns A Promise which resolves when all uploads are completed
      */
-    public async uploadFiles(files: Iterable<string>) {
+    public async uploadFiles(files: Iterable<string>): Promise<boolean[]> {
         const result = await pMap(
             files,
             (file: string) => this.uploadFile(file),
@@ -388,21 +391,27 @@ export class SftpClient {
      * Hard kill of the inner sftp client process
      * @returns
      */
-    public kill() {
+    public kill(): boolean {
         return this.client.kill();
     }
 
-    public async close() {
+    /**
+     * @returns The Result object from execa (imlementation detail)
+     * @throws Error if the sftp client could not be closed correctly
+     */
+    public async close(): Promise<Result<Options>> {
         await this.sendCommand("exit");
 
         try {
             // Allows awaiting the exit of the sftp client from the outside + getting the result
-            return this.client;
+            const result = await this.client;
+            return result;
         } catch (error) {
             this.logger.error(
                 `${this.uploaderName}: Error while exiting sftp client`,
                 error,
             );
+            throw error;
         }
     }
 }
