@@ -7,6 +7,7 @@ import {
 import { execa, type ResultPromise } from "execa";
 import { Readable, Writable } from "node:stream";
 import pDefer, { type DeferredPromise } from "p-defer";
+import pMap from "p-map";
 import type { GenericLogger } from "./GenericLogger.type.ts";
 
 /**
@@ -333,6 +334,20 @@ export class SftpClient {
         );
         await this.sendCommand(uploadInProgress.command);
         return uploadInProgress.pending.promise;
+    }
+
+    /**
+     * Uploads multiple files to the remote server (serially).
+     * @param files The local files to upload
+     * @returns resolves when all uploads are completed
+     */
+    public async uploadFiles(files: Iterable<string>) {
+        const result = await pMap(
+            files,
+            (file: string) => this.uploadFile(file),
+            { concurrency: 1 },
+        );
+        return result;
     }
 
     /**
