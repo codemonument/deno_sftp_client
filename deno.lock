@@ -3,7 +3,7 @@
 	"specifiers": {
 		"jsr:@std/assert@1": "1.0.6",
 		"jsr:@std/internal@^1.0.4": "1.0.4",
-		"npm:@types/node@^22.7.6": "22.7.6",
+		"npm:@types/node@*": "22.7.6",
 		"npm:execa@^9.4.1": "9.4.1"
 	},
 	"jsr": {
