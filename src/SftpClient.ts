@@ -1,15 +1,13 @@
+import { PuppetProcess } from "@codemonument/puppet-process/deno";
 import {
-    bytesToString,
     filter,
     simpleCallbackTarget,
     stringToLines,
 } from "@codemonument/rx-webstreams";
-import { execa, type Options, type Result, type ResultPromise } from "execa";
-import { Readable, Writable } from "node:stream";
 import pDefer, { type DeferredPromise } from "p-defer";
 import pMap from "p-map";
-import type { GenericLogger } from "./GenericLogger.type.ts";
 import { concatMap, from, Observable } from "rxjs";
+import type { GenericLogger } from "./GenericLogger.type.ts";
 
 /**
  * The options for instantiating a new SftpClient.
@@ -118,10 +116,9 @@ export class SftpClient {
     public uploaderName = "SftpClient";
 
     private logger: GenericLogger;
-    private client: ResultPromise;
+    private client: PuppetProcess;
     private clientOut: ReadableStream<string>;
-    private clientIn: WritableStreamDefaultWriter<Uint8Array>;
-    private textEncoder = new TextEncoder();
+    private clientIn: WritableStreamDefaultWriter<string>;
 
     /**
      * Includes all file paths for which an upload is in progress
@@ -136,62 +133,36 @@ export class SftpClient {
         this.uploaderName = uploaderName;
         this.logger = logger ?? console;
 
-        this.client = execa({
-            all: true,
-            stdout: ["pipe"],
-            stderr: ["pipe"],
+        this.client = new PuppetProcess({
+            command: `sftp ${host}`,
+            logger: this.logger,
             cwd, // specify a working directory
-        })`sftp ${host}`;
+        });
 
-        // Detect to the exit of the child process
-        this.client.then((result) => {
-            switch (result.exitCode) {
-                case 0: {
-                    this.logger.info(
-                        `${uploaderName}: SFTP Connection exited successfully`,
-                    );
-                    break;
-                }
-                default: {
-                    this.logger.error(
-                        `${uploaderName}: SFTP Connection exited unsuccessful with code ${result.exitCode}`,
-                        result,
-                    );
-                }
-            }
+        this.client.waitForExit().then(() => {
+            this.logger.info(
+                `${uploaderName}: SFTP Connection exited successfully`,
+            );
+        }).catch((error) => {
+            this.logger.error(
+                `${uploaderName}: SFTP Connection exited unsuccessful`,
+                error,
+            );
         });
 
         // Setup this.clientIn
         // --------------------
-        if (!this.client.stdin) {
-            throw new Error(
-                "SftpClient.client.stdin stream not available - DEV ERROR!",
-            );
-        }
-
-        const clientInRaw = Writable.toWeb(
-            this.client.stdin,
-        ) as WritableStream<Uint8Array>;
-        this.clientIn = clientInRaw.getWriter();
+        this.clientIn = this.client.std_in.getWriter();
 
         // Setup this.clientOut
         // --------------------
-        if (!this.client.all) {
-            throw new Error(
-                "SftpClient.client.all stream not available - DEV ERROR!",
-            );
-        }
+        const clientOutRaw = this.client.std_all;
 
-        const clientOutUint8 = Readable.toWeb(
-            this.client.all,
-        ) as ReadableStream<
-            Uint8Array
-        >;
-        this.clientOut = clientOutUint8
-            .pipeThrough(bytesToString())
+        this.clientOut = clientOutRaw
             .pipeThrough(stringToLines())
             .pipeThrough(filter((line: string) => line.trim() !== ""));
 
+        // capture and interpret output of the sftp cli
         this.clientOut.pipeTo(
             simpleCallbackTarget((line) => {
                 // split line at spaces
@@ -254,6 +225,9 @@ export class SftpClient {
                 }
             }),
         );
+
+        // start the sftp client process
+        this.client.start();
     }
 
     /**
@@ -261,8 +235,7 @@ export class SftpClient {
      * see here for sftp cli docs: https://www.cs.fsu.edu/~myers/howto/commandLineSSH.html
      */
     public async sendCommand(sftpCommand: string) {
-        const encodedCommand = this.textEncoder.encode(sftpCommand + ` \n`);
-        await this.clientIn.write(encodedCommand);
+        await this.clientIn.write(`${sftpCommand}\n`);
     }
 
     /**
@@ -395,21 +368,24 @@ export class SftpClient {
      * Hard kill of the inner sftp client process
      * @returns
      */
-    public kill(): boolean {
-        return this.client.kill();
+    public async kill(): Promise<void> {
+        // close input stream before killing
+        await this.clientIn.close();
+        await this.client.kill();
     }
 
     /**
      * @returns The Result object from execa (imlementation detail)
      * @throws Error if the sftp client could not be closed correctly
      */
-    public async close(): Promise<Result<Options>> {
+    public async close(): Promise<void> {
         await this.sendCommand("exit");
 
+        // close input stream before exiting
+        await this.clientIn.close();
+
         try {
-            // Allows awaiting the exit of the sftp client from the outside + getting the result
-            const result = await this.client;
-            return result;
+            await this.client.waitForExit();
         } catch (error) {
             this.logger.error(
                 `${this.uploaderName}: Error while exiting sftp client`,
