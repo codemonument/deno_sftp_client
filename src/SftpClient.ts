@@ -271,7 +271,7 @@ export class SftpClient {
     /**
      * Get the remote working directory
      */
-    public async pwd() {
+    public async pwd(): Promise<string> {
         this.pwdInProgress = pDefer<string>();
         await this.sendCommand("pwd");
         return this.pwdInProgress.promise;

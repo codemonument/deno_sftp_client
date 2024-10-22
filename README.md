@@ -4,10 +4,11 @@
 
 # Changelog
 
-## 0.4.0 - WIP
+## 0.4.0 - 2024-10-22
 
 - add SftpClient.help() command
 - add SftpClient.pwd() command which returns the pwd to the caller
+- upgrade @codemonument/puppet-process to 1.0.1 (removes annoying debug log)
 
 ## 0.3.0 - 2024-10-22
 

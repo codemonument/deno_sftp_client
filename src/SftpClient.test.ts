@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "@std/assert";
+import { assert } from "@std/assert";
 import { SftpClient } from "./SftpClient.ts";
 
 Deno.test("SftpClient connect & exit", async () => {
