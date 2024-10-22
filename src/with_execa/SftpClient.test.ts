@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "@std/assert";
-import { SftpClient } from "./SftpClient.ts";
+import { SftpClient } from "../with_execa/SftpClient.ts";
 
 Deno.test("SftpClient connect & exit", async () => {
     const sftpClient = new SftpClient({

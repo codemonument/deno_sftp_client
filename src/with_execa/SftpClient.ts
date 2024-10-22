@@ -8,7 +8,7 @@ import { execa, type Options, type Result, type ResultPromise } from "execa";
 import { Readable, Writable } from "node:stream";
 import pDefer, { type DeferredPromise } from "p-defer";
 import pMap from "p-map";
-import type { GenericLogger } from "./GenericLogger.type.ts";
+import type { GenericLogger } from "../GenericLogger.type.ts";
 import { concatMap, from, Observable } from "rxjs";
 
 /**
