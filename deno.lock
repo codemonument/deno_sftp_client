@@ -252,6 +252,7 @@
       "jsr:@codemonument/puppet-process@1",
       "jsr:@codemonument/rx-webstreams@~0.9.4",
       "jsr:@std/assert@^1.0.6",
+      "jsr:@std/path@^1.0.6",
       "jsr:@std/testing@^1.0.3",
       "npm:@types/node@^22.7.6",
       "npm:execa@^9.4.1",
