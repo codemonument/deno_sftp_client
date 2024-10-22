@@ -1,11 +1,11 @@
 import { assert, assertEquals } from "@std/assert";
-import { SftpClient } from "../with_execa/SftpClient.ts";
+import { SftpClient } from "./SftpClient.ts";
 
 Deno.test("SftpClient connect & exit", async () => {
     const sftpClient = new SftpClient({
         cwd: "playground",
         host: "maya-dev",
-        uploaderName: "with_execa",
+        uploaderName: "with_puppet_process",
     });
 
     const result = await sftpClient.close();
