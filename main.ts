@@ -4,7 +4,7 @@
  *
  * > [!IMPORTANT]
  * > This module does not handle any SSH config right now. You need to have the host you want to use in your SSH config setup on your machine.
- * > Example: my-host should be a valid host in your SSH config, complete with authorization information.
+ * > Example: my-host should be a valid host in your SSH config, complete with authorization information (in the example: 'maya-dev').
  *
  * @example
  * ```ts
@@ -12,7 +12,7 @@
  *
  * const sftpClient = new SftpClient({
  *    cwd: "playground",
- *    host: "my-host",
+ *    host: "maya-dev",
  *    uploaderName: "sftp_1",
  * });
  *
