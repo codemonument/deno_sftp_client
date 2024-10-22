@@ -4,6 +4,11 @@
 
 # Changelog
 
+## 0.4.0 - WIP
+
+- add SftpClient.help() command
+- add SftpClient.pwd() command which returns the pwd to the caller
+
 ## 0.3.0 - 2024-10-22
 
 - switch from execa to jsr:@codemonument/puppet-process for easier subprocess handling

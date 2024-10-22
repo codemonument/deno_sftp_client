@@ -8,4 +8,9 @@ const sftpClient = new SftpClient({
 
 await sftpClient.ls();
 
+const pwd = await sftpClient.pwd();
+console.log(pwd);
+
+// await sftpClient.mkdir("./test/test2");
+
 await sftpClient.close();

@@ -4,6 +4,7 @@ import {
     simpleCallbackTarget,
     stringToLines,
 } from "@codemonument/rx-webstreams";
+import { normalize } from "@std/path";
 import pDefer, { type DeferredPromise } from "p-defer";
 import pMap from "p-map";
 import { concatMap, from, Observable } from "rxjs";
@@ -127,6 +128,16 @@ export class SftpClient {
      */
     private uploadInProgress = new Map<string, FileTransferInProgress>();
 
+    /**
+     * Includes all remote dir paths for which a mkdir is in progress
+     */
+    private mkdirInProgress = new Map<string, DeferredPromise<boolean>>();
+
+    /**
+     * Includes all remote pwd requests in progress
+     */
+    private pwdInProgress: DeferredPromise<string> | undefined;
+
     // TODO: Implement downloadInProgress later
 
     constructor({ cwd, host, uploaderName, logger }: ClientOptions) {
@@ -182,6 +193,23 @@ export class SftpClient {
                         upload.pending.resolve(true);
                         break;
                     }
+                    case "Remote": {
+                        // detects this line: Remote working directory: /home/tt-bj2
+                        const parts = line.split(":");
+                        if (parts[0] === "Remote working directory") {
+                            const remotePath = parts[1].trim();
+                            if (this.pwdInProgress) {
+                                this.pwdInProgress.resolve(remotePath);
+                                this.pwdInProgress = undefined;
+                            }
+                            return;
+                        }
+
+                        // Some other unrecognized line starting with "Remote"
+                        this.logger.log(`${uploaderName}: -> ${line}`);
+
+                        break;
+                    }
                     case "sftp>": {
                         // prompt line
                         const [_prompt, action, ...rest] = parts;
@@ -234,9 +262,19 @@ export class SftpClient {
     /**
      * @param sftpCommand The sftp command to send to the sftp cli
      * see here for sftp cli docs: https://www.cs.fsu.edu/~myers/howto/commandLineSSH.html
+     * To see a full list of SFTP commands and their formats, you can type help when you are logged in via sftp, and it will give you a list of available commands.
      */
     public async sendCommand(sftpCommand: string) {
         await this.clientIn.write(`${sftpCommand}\n`);
+    }
+
+    /**
+     * Get the remote working directory
+     */
+    public async pwd() {
+        this.pwdInProgress = pDefer<string>();
+        await this.sendCommand("pwd");
+        return this.pwdInProgress.promise;
     }
 
     /**
@@ -275,6 +313,34 @@ export class SftpClient {
      */
     public async lcd(localPath: string) {
         await this.sendCommand(`lcd ${localPath}`);
+    }
+
+    /**
+     * @param remotePath required - the remote path to create
+     * Creates all paths in between if they do not exist
+     */
+    public async mkdir(remotePath: string) {
+        const normalizedPath = normalize(remotePath);
+        const parts = normalizedPath.split("/");
+        this.logger.debug("mkdir path parts", { parts });
+
+        // try to recursively create all parts of the path, starting with the full given path and then removing the last part if it fails
+
+        for (const part of parts) {
+            if (part === "") {
+                // skip empty parts
+                continue;
+            }
+            await this.sendCommand(`mkdir ${part}`);
+        }
+        // await this.sendCommand(`mkdir ${remotePath}`);
+    }
+
+    /**
+     * Shows the help menu of the sftp cli with explanations for each command and format
+     */
+    public async help() {
+        await this.sendCommand(`help`);
     }
 
     /**
