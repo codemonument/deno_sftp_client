@@ -316,27 +316,6 @@ export class SftpClient {
     }
 
     /**
-     * @param remotePath required - the remote path to create
-     * Creates all paths in between if they do not exist
-     */
-    public async mkdir(remotePath: string) {
-        const normalizedPath = normalize(remotePath);
-        const parts = normalizedPath.split("/");
-        this.logger.debug("mkdir path parts", { parts });
-
-        // try to recursively create all parts of the path, starting with the full given path and then removing the last part if it fails
-
-        for (const part of parts) {
-            if (part === "") {
-                // skip empty parts
-                continue;
-            }
-            await this.sendCommand(`mkdir ${part}`);
-        }
-        // await this.sendCommand(`mkdir ${remotePath}`);
-    }
-
-    /**
      * Shows the help menu of the sftp cli with explanations for each command and format
      */
     public async help() {
