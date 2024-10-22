@@ -1,6 +1,6 @@
 {
 	"name": "@codemonument/sftp-client",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"exports": "./main.ts",
 	"tasks": {
 		"example": "deno run -E -R=./,$(which deno) --allow-run=sftp example.ts",

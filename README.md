@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.3.0 - 2024-10-22
+
+- switch from execa to jsr:@codemonument/puppet-process for easier subprocess handling
+
 ## 0.2.0 - 2024-10-18
 
 - improve docs for jsr

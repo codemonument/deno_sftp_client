@@ -139,17 +139,6 @@ export class SftpClient {
             cwd, // specify a working directory
         });
 
-        this.client.waitForExit().then(() => {
-            this.logger.info(
-                `${uploaderName}: SFTP Connection exited successfully`,
-            );
-        }).catch((error) => {
-            this.logger.error(
-                `${uploaderName}: SFTP Connection exited unsuccessful`,
-                error,
-            );
-        });
-
         // Setup this.clientIn
         // --------------------
         this.clientIn = this.client.std_in.getWriter();
@@ -228,6 +217,18 @@ export class SftpClient {
 
         // start the sftp client process
         this.client.start();
+
+        // detect exit
+        this.client.waitForExit().then(() => {
+            this.logger.info(
+                `${uploaderName}: SFTP Connection exited successfully`,
+            );
+        }).catch((error) => {
+            this.logger.error(
+                `${uploaderName}: SFTP Connection exited unsuccessful`,
+                error,
+            );
+        });
     }
 
     /**

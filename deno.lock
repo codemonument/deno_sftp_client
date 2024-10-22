@@ -2,7 +2,6 @@
   "version": "4",
   "specifiers": {
     "jsr:@codemonument/puppet-process@1": "1.0.0",
-    "jsr:@codemonument/puppet-process@~0.1.2": "0.1.2",
     "jsr:@codemonument/rx-webstreams@~0.9.4": "0.9.4",
     "jsr:@std/assert@0.223": "0.223.0",
     "jsr:@std/assert@1": "1.0.6",
@@ -28,13 +27,6 @@
     "npm:zod@3.22.4": "3.22.4"
   },
   "jsr": {
-    "@codemonument/puppet-process@0.1.2": {
-      "integrity": "a1480ce1d4247c2596b43adb0aa8a0e7593b1f9ab1ada7b9dea1c6704eecc5c3",
-      "dependencies": [
-        "jsr:@codemonument/rx-webstreams",
-        "jsr:@std/streams"
-      ]
-    },
     "@codemonument/puppet-process@1.0.0": {
       "integrity": "fa8ac5aa447bf7c4a96b5fadc4ab21f93a96838c5e5bdde6ab5135834d293ed3",
       "dependencies": [
@@ -257,7 +249,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@codemonument/puppet-process@~0.1.2",
+      "jsr:@codemonument/puppet-process@1",
       "jsr:@codemonument/rx-webstreams@~0.9.4",
       "jsr:@std/assert@^1.0.6",
       "jsr:@std/testing@^1.0.3",
