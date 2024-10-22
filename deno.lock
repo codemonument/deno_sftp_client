@@ -1,6 +1,7 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@codemonument/puppet-process@1": "1.0.0",
     "jsr:@codemonument/puppet-process@~0.1.2": "0.1.2",
     "jsr:@codemonument/rx-webstreams@~0.9.4": "0.9.4",
     "jsr:@std/assert@0.223": "0.223.0",
@@ -16,6 +17,7 @@
     "jsr:@std/io@0.223.0": "0.223.0",
     "jsr:@std/log@0.223.0": "0.223.0",
     "jsr:@std/path@^1.0.6": "1.0.6",
+    "jsr:@std/streams@^1.0.7": "1.0.7",
     "jsr:@std/testing@^1.0.3": "1.0.3",
     "npm:@types/node@*": "22.7.6",
     "npm:@types/node@^22.7.6": "22.7.6",
@@ -27,7 +29,17 @@
   },
   "jsr": {
     "@codemonument/puppet-process@0.1.2": {
-      "integrity": "a1480ce1d4247c2596b43adb0aa8a0e7593b1f9ab1ada7b9dea1c6704eecc5c3"
+      "integrity": "a1480ce1d4247c2596b43adb0aa8a0e7593b1f9ab1ada7b9dea1c6704eecc5c3",
+      "dependencies": [
+        "jsr:@codemonument/rx-webstreams",
+        "jsr:@std/streams"
+      ]
+    },
+    "@codemonument/puppet-process@1.0.0": {
+      "integrity": "fa8ac5aa447bf7c4a96b5fadc4ab21f93a96838c5e5bdde6ab5135834d293ed3",
+      "dependencies": [
+        "jsr:@std/streams"
+      ]
     },
     "@codemonument/rx-webstreams@0.9.4": {
       "integrity": "8a80ebe3da8b9949e0ebc26107501d20c12f58e725072dd432c78be28f78c540",
@@ -85,6 +97,9 @@
     },
     "@std/path@1.0.6": {
       "integrity": "ab2c55f902b380cf28e0eec501b4906e4c1960d13f00e11cfbcd21de15f18fed"
+    },
+    "@std/streams@1.0.7": {
+      "integrity": "1a93917ca0c58c01b2bfb93647189229b1702677f169b6fb61ad6241cd2e499b"
     },
     "@std/testing@1.0.3": {
       "integrity": "f98c2bee53860a5916727d7e7d3abe920dd6f9edace022e2d059f00d05c2cf42",
