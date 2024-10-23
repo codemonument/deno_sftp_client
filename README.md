@@ -4,6 +4,13 @@
 
 # Changelog
 
+## 0.5.0 - WIP
+
+- rewrite sftp output matching to use ts-pattern
+  => for more explicit matching than
+  splitting the output line on the space character and switching over the first element
+  which for some outputs may not be enought to dissambiguate or is not convenient
+
 ## 0.4.0 - 2024-10-22
 
 - add SftpClient.help() command
