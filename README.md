@@ -4,7 +4,7 @@
 
 # Changelog
 
-## 0.5.0 - WIP
+## 0.5.0 - 2024-10-23
 
 - add `logMode: "normal" | "verbose" | "silent" | "only-unknown";` property to SfptClientOptions to allow completely disabling logging or setting it to different modes (default: "normal")
   only-unknown mode: only output logs for output messages from sftp-cli which are not captured by the SftpClient class and interpreted differently
