@@ -220,77 +220,65 @@ export class SftpClient {
                             `${uploaderName}: connected to ${host}`,
                         );
                     })
-                    .with(P.string.startsWith("Uploading "), () => {
+                    .with(
                         // detects this line:
                         // Uploading some/local/path/file.ext to some/remote/path/file.ext
-                        const [_uploading, localPath, _to, remotePath] = parts;
-                        const upload = this.uploadInProgress.get(localPath);
-                        if (!upload) {
-                            this.logger.error(
-                                `${uploaderName}: STATE_MISSMATCH: internal sftp cli announced an upload", but the FileTransferInProgress state was not found!`,
-                                { localPath, remotePath },
-                            );
-                            return;
-                        }
-                        this.logger.info(
-                            `${uploaderName}: Uploaded ${localPath} to ${remotePath}`,
-                        );
-                        upload.pending.resolve(true);
-                    });
-
-                // split line at spaces
-                const parts = line.split(" ");
-
-                switch (parts[0]) {
-                    case "Uploading": {
-                        break;
-                    }
-                    case "Remote": {
-                        // detects this line: Remote working directory: /home/tt-bj2
-                        const parts = line.split(":");
-                        if (parts[0] === "Remote working directory") {
-                            const remotePath = parts[1].trim();
-                            if (this.pwdInProgress) {
-                                this.pwdInProgress.resolve(remotePath);
-                                this.pwdInProgress = undefined;
+                        P.string.startsWith("Uploading "),
+                        () => {
+                            const [_uploading, localPath, _to, remotePath] =
+                                line;
+                            const upload = this.uploadInProgress.get(localPath);
+                            if (!upload) {
+                                this.logger.error(
+                                    `${uploaderName}: STATE_MISSMATCH: internal sftp cli announced an upload", but the FileTransferInProgress state was not found!`,
+                                    { localPath, remotePath },
+                                );
+                                return;
                             }
-                            return;
-                        }
-
-                        // Some other unrecognized line starting with "Remote"
-                        this.logger.log(`${uploaderName}: -> ${line}`);
-
-                        break;
-                    }
-                    case "-bash": {
+                            this.logger.info(
+                                `${uploaderName}: Uploaded ${localPath} to ${remotePath}`,
+                            );
+                            upload.pending.resolve(true);
+                        },
+                    )
+                    .with(
+                        // detects this line: Remote working directory: /home/tt-bj2
+                        // => is the answer to the pwd command
+                        P.string.startsWith("Remote working directory:"),
+                        () => {
+                            const parts = line.split(":");
+                            if (parts[0] === "Remote working directory") {
+                                const remotePath = parts[1].trim();
+                                if (this.pwdInProgress) {
+                                    this.pwdInProgress.resolve(remotePath);
+                                    this.pwdInProgress = undefined;
+                                }
+                                return;
+                            }
+                        },
+                    )
+                    .with(
                         // detects this line: -bash: cd: playground: No such file or directory
-                        // TODO: implement!
-                    }
-                    case "sftp>": {
+                        // => is the failure answer to the cd command
+                        P.string.startsWith("-bash: cd:"),
+                        () => {
+                            // TODO: Implement
+                        },
+                    )
+                    .with(P.string.startsWith("sftp>"), () => {
                         // prompt line
-                        const [_prompt, action, ...rest] = parts;
+                        // action can be switched over the sftp commands, like put, cd, etc.
+                        const [_prompt, action, ...rest] = line.split(" ");
                         const sftpCommand = `${action} ${rest.join(" ")}`;
                         switch (action) {
-                            case "put":
-                                // this is the upload prompt
-                                this.logger.log(
-                                    `${uploaderName}: ${sftpCommand}`,
-                                );
-                                break;
-                            case "cd":
-                                // this is initial cd prompt + evtl. other cd prompts
-                                this.logger.log(
-                                    `${uploaderName}: ${sftpCommand}`,
-                                );
-                                break;
                             default:
-                                this.logger.log(
+                                // only log sent commands as debug (in verbose mode)
+                                this.logger.debug(
                                     `${uploaderName}: ${sftpCommand}`,
                                 );
                         }
-                        break;
-                    }
-                    default: {
+                    })
+                    .otherwise(() => {
                         // some other unrecognized stdout/stderr line
                         if (logMode === "only-unknown") {
                             this.logger.logMode = "normal";
@@ -301,9 +289,7 @@ export class SftpClient {
                             this.logger.log(`${uploaderName}: -> ${line}`);
                             this.logger.logMode = "error";
                         }
-                        break;
-                    }
-                }
+                    });
             }),
         );
 
