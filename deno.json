@@ -1,26 +1,27 @@
 {
-	"name": "@codemonument/sftp-client",
-	"version": "0.4.0",
-	"exports": "./main.ts",
-	"tasks": {
-		"example": "deno run -E -R=./,$(which deno) --allow-run=sftp example.ts",
-		"dev-comment": "this exe requires read access to deno itself and write access to the current directory",
-		"dev": "deno run --watch -E -R=./,$(which deno) --allow-run=sftp example.ts",
-		"dry": "deno publish --dry-run",
-		"test": "deno test -A --doc",
-		"test-u": "deno test -A --doc -- --update",
-		"prepare": "deno task test && deno task dry"
-	},
-	"imports": {
-		"@codemonument/puppet-process": "jsr:@codemonument/puppet-process@^1.0.1",
-		"@codemonument/rx-webstreams": "jsr:@codemonument/rx-webstreams@^0.9.4",
-		"@std/assert": "jsr:@std/assert@^1.0.6",
-		"@std/path": "jsr:@std/path@^1.0.6",
-		"@std/testing": "jsr:@std/testing@^1.0.3",
-		"@types/node": "npm:@types/node@^22.7.6",
-		"execa": "npm:execa@^9.4.1",
-		"p-defer": "npm:p-defer@^4.0.1",
-		"p-map": "npm:p-map@^7.0.2",
-		"rxjs": "npm:rxjs@^7.8.1"
-	}
+  "name": "@codemonument/sftp-client",
+  "version": "0.4.0",
+  "exports": "./main.ts",
+  "tasks": {
+    "example": "deno run -E -R=./,$(which deno) --allow-run=sftp example.ts",
+    "dev-comment": "this exe requires read access to deno itself and write access to the current directory",
+    "dev": "deno run --watch -E -R=./,$(which deno) --allow-run=sftp example.ts",
+    "dry": "deno publish --dry-run",
+    "test": "deno test -A --doc",
+    "test-u": "deno test -A --doc -- --update",
+    "prepare": "deno task test && deno task dry"
+  },
+  "imports": {
+    "@codemonument/puppet-process": "jsr:@codemonument/puppet-process@^1.0.1",
+    "@codemonument/rx-webstreams": "jsr:@codemonument/rx-webstreams@^0.9.4",
+    "@std/assert": "jsr:@std/assert@^1.0.6",
+    "@std/path": "jsr:@std/path@^1.0.6",
+    "@std/testing": "jsr:@std/testing@^1.0.3",
+    "@types/node": "npm:@types/node@^22.7.6",
+    "execa": "npm:execa@^9.4.1",
+    "p-defer": "npm:p-defer@^4.0.1",
+    "p-map": "npm:p-map@^7.0.2",
+    "rxjs": "npm:rxjs@^7.8.1",
+    "ts-pattern": "npm:ts-pattern@^5.5.0"
+  }
 }

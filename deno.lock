@@ -24,6 +24,7 @@
     "npm:p-defer@^4.0.1": "4.0.1",
     "npm:p-map@^7.0.2": "7.0.2",
     "npm:rxjs@^7.8.1": "7.8.1",
+    "npm:ts-pattern@^5.5.0": "5.5.0",
     "npm:zod@3.22.4": "3.22.4"
   },
   "jsr": {
@@ -225,6 +226,9 @@
     "strip-final-newline@4.0.0": {
       "integrity": "sha512-aulFJcD6YK8V1G7iRB5tigAP4TsHBZZrOV8pjV++zdUwmeV8uzbY7yn6h9MswN62adStNZFuCIx4haBnRuMDaw=="
     },
+    "ts-pattern@5.5.0": {
+      "integrity": "sha512-jqbIpTsa/KKTJYWgPNsFNbLVpwCgzXfFJ1ukNn4I8hMwyQzHMJnk/BqWzggB0xpkILuKzaO/aMYhS0SkaJyKXg=="
+    },
     "tslib@2.6.2": {
       "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q=="
     },
@@ -258,7 +262,8 @@
       "npm:execa@^9.4.1",
       "npm:p-defer@^4.0.1",
       "npm:p-map@^7.0.2",
-      "npm:rxjs@^7.8.1"
+      "npm:rxjs@^7.8.1",
+      "npm:ts-pattern@^5.5.0"
     ]
   }
 }
