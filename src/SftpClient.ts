@@ -141,7 +141,10 @@ export class SftpClient {
     // Commands in Progress Handling
     private inProgress: {
         pwd?: { pending: DeferredPromise<string> };
-        cd?: { pending: DeferredPromise<void> };
+        cd?: {
+            remotePath: string;
+            pending: DeferredPromise<void>;
+        };
         [key: string]: {
             pending: DeferredPromise<unknown>;
         } | undefined;
@@ -220,7 +223,7 @@ export class SftpClient {
         // capture and interpret output of the sftp cli
         this.clientOut.pipeTo(
             simpleCallbackTarget((line) => {
-                this.logger.debug(`${uploaderName} - rawOutput: ${line}`);
+                this.logger.debug(`${uploaderName} rawOut: ${line}`);
 
                 // use ts-pattern to match over the output line string
                 // String based matching patterns: https://github.com/gvergnaud/ts-pattern?tab=readme-ov-file#pstring-predicates
@@ -262,13 +265,9 @@ export class SftpClient {
                         },
                     )
                     .with(
-                        // detects these lines:
-                        // -bash: cd: playground: No such file or directory
-                        // stat remote: No such file or directory
-                        // => is the failure answer to the cd command
-                        P.string.startsWith("-bash: cd:").or(
-                            P.string.startsWith("stat remote:"),
-                        ),
+                        // Failure answer to the `cd` command
+                        // detects: "-bash: cd: playground: No such file or directory"
+                        P.string.startsWith("-bash: cd:"),
                         () => {
                             const [_bash, _cd, remotePath, reason] = line.split(
                                 ":",
@@ -276,6 +275,21 @@ export class SftpClient {
                             this.rejectInProgress(
                                 "cd",
                                 `cd into '${remotePath.trim()}' failed: ${reason.trim()}`,
+                            );
+                        },
+                    )
+                    .with(
+                        // Another failure answer to the `cd` command
+                        // detects: "stat remote: No such file or directory"
+                        P.string.startsWith(`stat remote:`),
+                        () => {
+                            const [_prefix, reason] = line.split(
+                                ":",
+                            );
+                            const cdCommand = this.inProgress.cd;
+                            this.rejectInProgress(
+                                "cd",
+                                `cd into '${cdCommand?.remotePath}' failed: ${reason.trim()}`,
                             );
                         },
                     )
@@ -287,16 +301,13 @@ export class SftpClient {
                         }
 
                         // prompt line
+                        // const [_prompt, action, ...rest] = line.split(" ");
+                        // const sftpCommand = `${action} ${rest.join(" ")}`;
                         // action can be switched over the sftp commands, like put, cd, etc.
-                        const [_prompt, action, ...rest] = line.split(" ");
-                        const sftpCommand = `${action} ${rest.join(" ")}`;
-                        switch (action) {
-                            default:
-                                // only log sent commands as debug (in verbose mode)
-                                this.logger.debug(
-                                    `${uploaderName}: ${sftpCommand}`,
-                                );
-                        }
+                        // switch (action) {
+                        // "cd": {}
+                        // "pwd": {}
+                        // }
                     })
                     .otherwise(() => {
                         // some other unrecognized stdout/stderr line
@@ -381,6 +392,7 @@ export class SftpClient {
      */
     public async cd(remotePath: string): Promise<void> {
         this.inProgress.cd = {
+            remotePath,
             pending: pDefer<void>(),
         };
         await this.sendCommand(`cd ${remotePath}`);

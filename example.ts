@@ -13,13 +13,16 @@ const sftpClient = new SftpClient({
     cwd: "playground",
     host: "maya-dev",
     uploaderName: "sftp_1",
-    logMode: "unknown-and-error",
+    // logMode: "unknown-and-error",
+    logMode: "verbose",
 });
 
 await sftpClient.ls();
 
 const pwd = await sftpClient.pwd();
 exampleLog("pwd", pwd);
+
+await sftpClient.cd("www/maya.internett.de/playground");
 
 // await sftpClient.mkdir("./test/test2");
 
