@@ -4,11 +4,12 @@ import {
     simpleCallbackTarget,
     stringToLines,
 } from "@codemonument/rx-webstreams";
-import { normalize } from "@std/path";
 import pDefer, { type DeferredPromise } from "p-defer";
 import pMap from "p-map";
 import { concatMap, from, Observable } from "rxjs";
+import { match, P } from "ts-pattern";
 import type { GenericLogger } from "./GenericLogger.type.ts";
+import { SwitchableLogger } from "./internal/SwitchableLogger.ts";
 
 /**
  * The options for instantiating a new SftpClient.
@@ -36,7 +37,17 @@ export type ClientOptions = {
      */
     uploaderName: string;
 
+    /**
+     * Can be used to pass in a custom logger.
+     * Default: console
+     */
     logger?: GenericLogger;
+
+    /**
+     * Whether the logger should be turned on or off.
+     * Default: true
+     */
+    loggerOn?: boolean;
 };
 
 /**
@@ -114,8 +125,6 @@ export type FileTransferInProgress =
  * For instantiation - options: see {@link ClientOptions}
  */
 export class SftpClient {
-    public uploaderName = "SftpClient";
-
     private logger: GenericLogger;
     private client: PuppetProcess;
     private clientOut: ReadableStream<string>;
@@ -140,15 +149,26 @@ export class SftpClient {
 
     // TODO: Implement downloadInProgress later
 
-    constructor({ cwd, host, uploaderName, logger }: ClientOptions) {
+    // Public Properties
+    public uploaderName = "SftpClient";
+    public readonly connected: Promise<boolean>;
+
+    constructor(
+        { cwd, host, uploaderName, logger = console, loggerOn = true }:
+            ClientOptions,
+    ) {
         this.uploaderName = uploaderName;
-        this.logger = logger ?? console;
+        this.logger = new SwitchableLogger(loggerOn, logger);
 
         this.client = new PuppetProcess({
             command: `sftp ${host}`,
             logger: this.logger,
             cwd, // specify a working directory
         });
+
+        // Setup public "connected"-Promise
+        const connectedDeferred = pDefer<boolean>();
+        this.connected = connectedDeferred.promise;
 
         // Setup this.clientIn
         // --------------------
@@ -165,6 +185,11 @@ export class SftpClient {
         // capture and interpret output of the sftp cli
         this.clientOut.pipeTo(
             simpleCallbackTarget((line) => {
+                // use ts-pattern to match over the output line string
+                // String based matching patterns: https://github.com/gvergnaud/ts-pattern?tab=readme-ov-file#pstring-predicates
+                match(line)
+                    .with(P.string.startsWith("Connected"), () => {});
+
                 // split line at spaces
                 const parts = line.split(" ");
 

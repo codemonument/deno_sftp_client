@@ -6,6 +6,7 @@
 
 ## 0.5.0 - WIP
 
+- add `loggerOn` property to SfptClientOptions to allow completely disabling logging
 - rewrite sftp output matching to use ts-pattern
   => for more explicit matching than
   splitting the output line on the space character and switching over the first element
