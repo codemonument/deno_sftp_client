@@ -493,7 +493,7 @@ export class SftpClient {
     }
 
     /**
-     * @returns The Result object from execa (imlementation detail)
+     * @returns A promise that resolves when the client could be closed correctly
      * @throws Error if the sftp client could not be closed correctly
      */
     public async close(): Promise<void> {
