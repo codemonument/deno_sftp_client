@@ -6,7 +6,8 @@
 
 ## 0.5.0 - WIP
 
-- add `loggerOn` property to SfptClientOptions to allow completely disabling logging
+- add `logMode: "normal" | "verbose" | "silent" | "only-unknown";` property to SfptClientOptions to allow completely disabling logging or setting it to different modes (default: "normal")
+  only-unknown mode: only output logs for output messages from sftp-cli which are not captured by the SftpClient class and interpreted differently
 - rewrite sftp output matching to use ts-pattern
   => for more explicit matching than
   splitting the output line on the space character and switching over the first element

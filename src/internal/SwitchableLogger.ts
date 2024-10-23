@@ -7,34 +7,37 @@ import type { GenericLogger } from "../../main.ts";
 export class SwitchableLogger implements GenericLogger {
     private logger: GenericLogger;
 
-    public isOn: boolean;
+    public logMode: "normal" | "verbose" | "silent";
 
-    constructor(isOn: boolean = true, logger: GenericLogger = console) {
-        this.isOn = isOn;
+    constructor(
+        logMode: "normal" | "verbose" | "silent" = "normal",
+        logger: GenericLogger = console,
+    ) {
+        this.logMode = logMode;
         this.logger = logger;
     }
     log(message: string, ...metadata: unknown[]): void {
-        if (this.isOn) {
+        if (this.logMode === "normal" || this.logMode === "verbose") {
             this.logger.log(message, ...metadata);
         }
     }
     info(message: string, ...metadata: unknown[]): void {
-        if (this.isOn) {
+        if (this.logMode === "normal" || this.logMode === "verbose") {
             this.logger.info(message, ...metadata);
         }
     }
     debug(message: string, ...metadata: unknown[]): void {
-        if (this.isOn) {
+        if (this.logMode === "verbose") {
             this.logger.debug(message, ...metadata);
         }
     }
     warn(message: string, ...metadata: unknown[]): void {
-        if (this.isOn) {
+        if (this.logMode === "normal" || this.logMode === "verbose") {
             this.logger.warn(message, ...metadata);
         }
     }
     error(message: string, ...metadata: unknown[]): void {
-        if (this.isOn) {
+        if (this.logMode === "normal" || this.logMode === "verbose") {
             this.logger.error(message, ...metadata);
         }
     }

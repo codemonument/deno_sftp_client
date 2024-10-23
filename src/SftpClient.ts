@@ -44,10 +44,13 @@ export type ClientOptions = {
     logger?: GenericLogger;
 
     /**
-     * Whether the logger should be turned on or off.
-     * Default: true
+     * Levels:
+     *   Normal logs anything which is an `info` or `log` level log or above (`warn`, `error`).
+     *   Verbose logs everything.
+     *   Silent logs nothing.
+     *   Only-unknown logs only logs messages from sftp output, which are not known to this SftpClient wrapper class, so that not implemented functionality can be detected
      */
-    loggerOn?: boolean;
+    logMode: "normal" | "verbose" | "silent" | "only-unknown";
 };
 
 /**
@@ -125,7 +128,7 @@ export type FileTransferInProgress =
  * For instantiation - options: see {@link ClientOptions}
  */
 export class SftpClient {
-    private logger: GenericLogger;
+    private logger: SwitchableLogger;
     private client: PuppetProcess;
     private clientOut: ReadableStream<string>;
     private clientIn: WritableStreamDefaultWriter<string>;
@@ -154,11 +157,14 @@ export class SftpClient {
     public readonly connected: Promise<boolean>;
 
     constructor(
-        { cwd, host, uploaderName, logger = console, loggerOn = true }:
+        { cwd, host, uploaderName, logger = console, logMode = "normal" }:
             ClientOptions,
     ) {
         this.uploaderName = uploaderName;
-        this.logger = new SwitchableLogger(loggerOn, logger);
+        this.logger = new SwitchableLogger(
+            (logMode === "only-unknown") ? "silent" : logMode,
+            logger,
+        );
 
         this.client = new PuppetProcess({
             command: `sftp ${host}`,
@@ -188,7 +194,12 @@ export class SftpClient {
                 // use ts-pattern to match over the output line string
                 // String based matching patterns: https://github.com/gvergnaud/ts-pattern?tab=readme-ov-file#pstring-predicates
                 match(line)
-                    .with(P.string.startsWith("Connected"), () => {});
+                    .with(P.string.startsWith("Connected"), () => {
+                        connectedDeferred.resolve(true);
+                        this.logger.info(
+                            `${uploaderName}: connected to ${host}`,
+                        );
+                    });
 
                 // split line at spaces
                 const parts = line.split(" ");
@@ -265,7 +276,11 @@ export class SftpClient {
                     }
                     default: {
                         // some other unrecognized stdout/stderr line
-                        this.logger.log(`${uploaderName}: -> ${line}`);
+                        if (logMode === "only-unknown") {
+                            this.logger.logMode = "normal";
+                            this.logger.log(`${uploaderName}: -> ${line}`);
+                            this.logger.logMode = "normal";
+                        }
                         break;
                     }
                 }
