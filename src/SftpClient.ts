@@ -210,6 +210,10 @@ export class SftpClient {
 
                         break;
                     }
+                    case "-bash": {
+                        // detects this line: -bash: cd: playground: No such file or directory
+                        // TODO: implement!
+                    }
                     case "sftp>": {
                         // prompt line
                         const [_prompt, action, ...rest] = parts;
