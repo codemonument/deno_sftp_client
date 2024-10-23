@@ -12,3 +12,5 @@ Deno.test("SftpClient connect & exit", async () => {
 
     assert("closing sftp client was successful");
 });
+
+// TODO: add tests for logMode
