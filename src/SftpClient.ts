@@ -166,8 +166,13 @@ export class SftpClient {
     public readonly connected: Promise<boolean>;
 
     constructor(
-        { cwd, host, uploaderName, logger = console, logMode = "normal" }:
-            ClientOptions,
+        {
+            cwd,
+            host,
+            uploaderName,
+            logger: genericLogger = console,
+            logMode = "normal",
+        }: ClientOptions,
     ) {
         this.uploaderName = uploaderName;
 
@@ -175,17 +180,17 @@ export class SftpClient {
         if (logMode === "unknown-and-error") {
             this.logger = new SwitchableLogger(
                 "error",
-                logger,
+                genericLogger,
             );
         } else if (logMode === "only-unknown") {
             this.logger = new SwitchableLogger(
                 "silent",
-                logger,
+                genericLogger,
             );
         } else {
             this.logger = new SwitchableLogger(
                 logMode,
-                logger,
+                genericLogger,
             );
         }
 
@@ -215,6 +220,8 @@ export class SftpClient {
         // capture and interpret output of the sftp cli
         this.clientOut.pipeTo(
             simpleCallbackTarget((line) => {
+                this.logger.debug(`${uploaderName} - rawOutput: ${line}`);
+
                 // use ts-pattern to match over the output line string
                 // String based matching patterns: https://github.com/gvergnaud/ts-pattern?tab=readme-ov-file#pstring-predicates
                 match(line)
