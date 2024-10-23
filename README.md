@@ -4,6 +4,10 @@
 
 # Changelog
 
+## 0.5.1 - 2024-10-23
+
+- fixed handling of failure output for cd
+
 ## 0.5.0 - 2024-10-23
 
 - add `logMode: "normal" | "verbose" | "silent" | "only-unknown";` property to SfptClientOptions to allow completely disabling logging or setting it to different modes (default: "normal")
