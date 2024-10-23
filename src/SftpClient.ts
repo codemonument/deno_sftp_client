@@ -138,6 +138,15 @@ export class SftpClient {
     private clientOut: ReadableStream<string>;
     private clientIn: WritableStreamDefaultWriter<string>;
 
+    // Commands in Progress Handling
+    private inProgress: {
+        pwd?: { pending: DeferredPromise<string> };
+        cd?: { pending: DeferredPromise<void> };
+        [key: string]: {
+            pending: DeferredPromise<unknown>;
+        } | undefined;
+    } = {};
+
     /**
      * Includes all file paths for which an upload is in progress
      * key: local file path
@@ -149,11 +158,6 @@ export class SftpClient {
      * Includes all remote dir paths for which a mkdir is in progress
      */
     private mkdirInProgress = new Map<string, DeferredPromise<boolean>>();
-
-    /**
-     * Includes all remote pwd requests in progress
-     */
-    private pwdInProgress: DeferredPromise<string> | undefined;
 
     // TODO: Implement downloadInProgress later
 
@@ -246,15 +250,8 @@ export class SftpClient {
                         // => is the answer to the pwd command
                         P.string.startsWith("Remote working directory:"),
                         () => {
-                            const parts = line.split(":");
-                            if (parts[0] === "Remote working directory") {
-                                const remotePath = parts[1].trim();
-                                if (this.pwdInProgress) {
-                                    this.pwdInProgress.resolve(remotePath);
-                                    this.pwdInProgress = undefined;
-                                }
-                                return;
-                            }
+                            const [_part1, remotePath] = line.split(":");
+                            this.resolveInProgress("pwd", remotePath.trim());
                         },
                     )
                     .with(
@@ -262,10 +259,22 @@ export class SftpClient {
                         // => is the failure answer to the cd command
                         P.string.startsWith("-bash: cd:"),
                         () => {
-                            // TODO: Implement
+                            const [_bash, _cd, remotePath, reason] = line.split(
+                                ":",
+                            );
+                            this.rejectInProgress(
+                                "cd",
+                                `cd into '${remotePath.trim()}' failed: ${reason.trim()}`,
+                            );
                         },
                     )
                     .with(P.string.startsWith("sftp>"), () => {
+                        // resolve all commands, which do not return anything in case of success
+                        // ----------------------------------------------------------------------
+                        if (this.inProgress.cd) {
+                            this.resolveInProgress("cd", undefined);
+                        }
+
                         // prompt line
                         // action can be switched over the sftp commands, like put, cd, etc.
                         const [_prompt, action, ...rest] = line.split(" ");
@@ -322,9 +331,11 @@ export class SftpClient {
      * Get the remote working directory
      */
     public async pwd(): Promise<string> {
-        this.pwdInProgress = pDefer<string>();
+        this.inProgress.pwd = {
+            pending: pDefer<string>(),
+        };
         await this.sendCommand("pwd");
-        return this.pwdInProgress.promise;
+        return this.inProgress.pwd.pending.promise;
     }
 
     /**
@@ -355,7 +366,11 @@ export class SftpClient {
      * @param remotePath required - the remote path to cd into
      */
     public async cd(remotePath: string) {
+        this.inProgress.cd = {
+            pending: pDefer<void>(),
+        };
         await this.sendCommand(`cd ${remotePath}`);
+        return this.inProgress.cd.pending.promise;
     }
 
     /**
@@ -489,5 +504,42 @@ export class SftpClient {
             );
             throw error;
         }
+    }
+
+    private resolveInProgress(
+        command: string, // the command which was sent to the sftp cli (without args, like 'cd' or 'pwd)
+        value: unknown,
+    ) {
+        const lastCommand = this.inProgress[command];
+
+        if (!lastCommand) {
+            this.logger.error(
+                `DEV ERROR (should not happen in prod - make issue in github):
+                 this.inProgress['${command}'] is not set, but it should resolve in this function! - Logging the resolved value instead!
+                 Logging it as 'info' level, you might not see it, depending on your logMode given in constructor! 
+                 Default logMode is 'normal'.`,
+            );
+            this.logger.info(`${command}: ${value}`);
+            return;
+        }
+
+        lastCommand.pending.resolve(value);
+    }
+    private rejectInProgress(
+        command: string, // the command which was sent to the sftp cli (without args, like 'cd' or 'pwd)
+        errorMessage: string,
+    ) {
+        const lastCommand = this.inProgress[command];
+
+        if (!lastCommand) {
+            this.logger.error(
+                `DEV ERROR (should not happen in prod - make issue in github):
+                 this.lastNoOutputCommand is not set, but an error occurred for such command! - Logging the error instead!`,
+            );
+            this.logger.error(errorMessage);
+            return;
+        }
+
+        lastCommand.pending.reject(errorMessage);
     }
 }

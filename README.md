@@ -12,6 +12,9 @@
   => for more explicit matching than
   splitting the output line on the space character and switching over the first element
   which for some outputs may not be enought to dissambiguate or is not convenient
+- add completely new `inProgress` infrastructure for dealing with pending commands
+  => first ones: 'pwd' and 'cd'
+  => the promise returned by these two commands now successfully resolves or rejects with the output of the command or at least when the command was finished sucessfully
 
 ## 0.4.0 - 2024-10-22
 
