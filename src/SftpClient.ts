@@ -255,9 +255,13 @@ export class SftpClient {
                         },
                     )
                     .with(
-                        // detects this line: -bash: cd: playground: No such file or directory
+                        // detects these lines:
+                        // -bash: cd: playground: No such file or directory
+                        // stat remote: No such file or directory
                         // => is the failure answer to the cd command
-                        P.string.startsWith("-bash: cd:"),
+                        P.string.startsWith("-bash: cd:").or(
+                            P.string.startsWith("stat remote:"),
+                        ),
                         () => {
                             const [_bash, _cd, remotePath, reason] = line.split(
                                 ":",
@@ -297,6 +301,9 @@ export class SftpClient {
                             this.logger.logMode = "normal";
                             this.logger.log(`${uploaderName}: -> ${line}`);
                             this.logger.logMode = "error";
+                        } else {
+                            // pure silent log mode will be handled by the logger itself
+                            this.logger.log(`${uploaderName}: -> ${line}`);
                         }
                     });
             }),
