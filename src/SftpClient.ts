@@ -50,7 +50,7 @@ export type ClientOptions = {
      *   Silent logs nothing.
      *   Only-unknown logs only logs messages from sftp output, which are not known to this SftpClient wrapper class, so that not implemented functionality can be detected
      */
-    logMode:
+    logMode?:
         | "normal"
         | "verbose"
         | "silent"
