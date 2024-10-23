@@ -50,7 +50,12 @@ export type ClientOptions = {
      *   Silent logs nothing.
      *   Only-unknown logs only logs messages from sftp output, which are not known to this SftpClient wrapper class, so that not implemented functionality can be detected
      */
-    logMode: "normal" | "verbose" | "silent" | "only-unknown";
+    logMode:
+        | "normal"
+        | "verbose"
+        | "silent"
+        | "only-unknown"
+        | "unknown-and-error";
 };
 
 /**
@@ -161,11 +166,26 @@ export class SftpClient {
             ClientOptions,
     ) {
         this.uploaderName = uploaderName;
-        this.logger = new SwitchableLogger(
-            (logMode === "only-unknown") ? "silent" : logMode,
-            logger,
-        );
 
+        // Setup logMode
+        if (logMode === "unknown-and-error") {
+            this.logger = new SwitchableLogger(
+                "error",
+                logger,
+            );
+        } else if (logMode === "only-unknown") {
+            this.logger = new SwitchableLogger(
+                "silent",
+                logger,
+            );
+        } else {
+            this.logger = new SwitchableLogger(
+                logMode,
+                logger,
+            );
+        }
+
+        // Setup the PuppetProcess
         this.client = new PuppetProcess({
             command: `sftp ${host}`,
             logger: this.logger,
@@ -199,19 +219,8 @@ export class SftpClient {
                         this.logger.info(
                             `${uploaderName}: connected to ${host}`,
                         );
-                    });
-
-                // split line at spaces
-                const parts = line.split(" ");
-
-                switch (parts[0]) {
-                    case "Connected": {
-                        this.logger.info(
-                            `${uploaderName}: connected to ${host}`,
-                        );
-                        break;
-                    }
-                    case "Uploading": {
+                    })
+                    .with(P.string.startsWith("Uploading "), () => {
                         // detects this line:
                         // Uploading some/local/path/file.ext to some/remote/path/file.ext
                         const [_uploading, localPath, _to, remotePath] = parts;
@@ -227,6 +236,13 @@ export class SftpClient {
                             `${uploaderName}: Uploaded ${localPath} to ${remotePath}`,
                         );
                         upload.pending.resolve(true);
+                    });
+
+                // split line at spaces
+                const parts = line.split(" ");
+
+                switch (parts[0]) {
+                    case "Uploading": {
                         break;
                     }
                     case "Remote": {
@@ -279,7 +295,11 @@ export class SftpClient {
                         if (logMode === "only-unknown") {
                             this.logger.logMode = "normal";
                             this.logger.log(`${uploaderName}: -> ${line}`);
+                            this.logger.logMode = "silent";
+                        } else if (logMode === "unknown-and-error") {
                             this.logger.logMode = "normal";
+                            this.logger.log(`${uploaderName}: -> ${line}`);
+                            this.logger.logMode = "error";
                         }
                         break;
                     }
