@@ -348,8 +348,8 @@ export class SftpClient {
      * see here for sftp cli docs: https://www.cs.fsu.edu/~myers/howto/commandLineSSH.html
      * To see a full list of SFTP commands and their formats, you can type help when you are logged in via sftp, and it will give you a list of available commands.
      */
-    public async sendCommand(sftpCommand: string) {
-        await this.clientIn.write(`${sftpCommand}\n`);
+    public sendCommand(sftpCommand: string): Promise<void> {
+        return this.clientIn.write(`${sftpCommand}\n`);
     }
 
     /**
