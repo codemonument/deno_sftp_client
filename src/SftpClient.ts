@@ -391,12 +391,12 @@ export class SftpClient {
      * @param remotePath required - the remote path to cd into
      */
     public async cd(remotePath: string): Promise<void> {
-        // this.inProgress.cd = {
-        //     remotePath,
-        //     pending: pDefer<void>(),
-        // };
+        this.inProgress.cd = {
+            remotePath,
+            pending: pDefer<void>(),
+        };
         await this.sendCommand(`cd ${remotePath}`);
-        // return this.inProgress.cd.pending.promise;
+        return this.inProgress.cd.pending.promise;
     }
 
     /**
