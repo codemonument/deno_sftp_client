@@ -4,6 +4,7 @@
 	"exports": "./main.ts",
 	"tasks": {
 		"example": "deno run -E -R=./,$(which deno) --allow-run=sftp example.ts",
+		"example-execa": "deno run -E -R=./,$(which deno) --allow-run=sftp example_execa.ts",
 		"dev-comment": "this exe requires read access to deno itself and write access to the current directory",
 		"dev": "deno run --watch -E -R=./,$(which deno) --allow-run=sftp example.ts",
 		"dry": "deno publish --dry-run",

@@ -1,4 +1,4 @@
-import { SftpClient } from "./main.ts";
+import { SftpClient } from "./src/with_execa/SftpClient.ts";
 
 function exampleLog(message: any, meta: any = undefined) {
     if (meta) {
@@ -11,20 +11,14 @@ function exampleLog(message: any, meta: any = undefined) {
 const sftpClient = new SftpClient({
     cwd: "playground",
     host: "maya-dev",
-    uploaderName: "sftp_1",
-    // logMode: "unknown-and-error",
-    logMode: "verbose",
+    uploaderName: "execa_1",
 });
 
 await sftpClient.ls();
 
-const pwd = await sftpClient.pwd();
-exampleLog("pwd", pwd);
-
 await sftpClient.cd("playground");
 
-const pwd2 = await sftpClient.pwd();
-exampleLog("pwd2", pwd2);
+await sftpClient.sendCommand("pwd");
 
 await sftpClient.close();
 
