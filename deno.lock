@@ -6,6 +6,7 @@
     "jsr:@std/assert@0.223": "0.223.0",
     "jsr:@std/assert@1": "1.0.6",
     "jsr:@std/assert@^1.0.6": "1.0.6",
+    "jsr:@std/async@^1.0.6": "1.0.6",
     "jsr:@std/bytes@0.223": "0.223.0",
     "jsr:@std/data-structures@^1.0.4": "1.0.4",
     "jsr:@std/fmt@0.223": "0.223.0",
@@ -50,6 +51,9 @@
       "dependencies": [
         "jsr:@std/internal"
       ]
+    },
+    "@std/async@1.0.6": {
+      "integrity": "6d262156dd35c4a72ee1a2f8679be40264f370cfb92e2e13d4eca2ae05e16f34"
     },
     "@std/bytes@0.223.0": {
       "integrity": "84b75052cd8680942c397c2631318772b295019098f40aac5c36cead4cba51a8"
@@ -256,6 +260,7 @@
       "jsr:@codemonument/puppet-process@^1.0.1",
       "jsr:@codemonument/rx-webstreams@~0.9.4",
       "jsr:@std/assert@^1.0.6",
+      "jsr:@std/async@^1.0.6",
       "jsr:@std/path@^1.0.6",
       "jsr:@std/testing@^1.0.3",
       "npm:@types/node@^22.7.6",
