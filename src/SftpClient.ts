@@ -223,7 +223,7 @@ export class SftpClient {
         // capture and interpret output of the sftp cli
         this.clientOut.pipeTo(
             simpleCallbackTarget((line) => {
-                this.logger.debug(`${uploaderName} rawOut: ${line}`);
+                this.logger.debug(`${uploaderName}: rawOut: ${line}`);
 
                 // use ts-pattern to match over the output line string
                 // String based matching patterns: https://github.com/gvergnaud/ts-pattern?tab=readme-ov-file#pstring-predicates
@@ -391,12 +391,12 @@ export class SftpClient {
      * @param remotePath required - the remote path to cd into
      */
     public async cd(remotePath: string): Promise<void> {
-        this.inProgress.cd = {
-            remotePath,
-            pending: pDefer<void>(),
-        };
+        // this.inProgress.cd = {
+        //     remotePath,
+        //     pending: pDefer<void>(),
+        // };
         await this.sendCommand(`cd ${remotePath}`);
-        return this.inProgress.cd.pending.promise;
+        // return this.inProgress.cd.pending.promise;
     }
 
     /**
@@ -537,6 +537,10 @@ export class SftpClient {
         value: unknown,
     ) {
         const lastCommand = this.inProgress[command];
+
+        // this.logger.debug(
+        //     `Resolving in progress command '${command}' with value '${value}'`,
+        // );
 
         if (!lastCommand) {
             this.logger.error(
