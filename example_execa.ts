@@ -16,6 +16,8 @@ const sftpClient = new SftpClient({
 
 await sftpClient.ls();
 
+await sftpClient.sendCommand("pwd");
+
 await sftpClient.cd("playground");
 
 await sftpClient.sendCommand("pwd");
