@@ -1,5 +1,10 @@
 # sftp-client
 
+**CAUTION** 
+This project is highly experimental and doesn't work at all right now. 
+I have a newer version coded in rust, which is not open source yet because some confidential things have to be removed from the repo before publishing. 
+You can add an issue / upvote issues if you're interested in this newer version.
+
 ---
 
 # Changelog
